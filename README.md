@@ -18,7 +18,7 @@ Professional static website built with React and Vite, showcasing JeatLabs' serv
 
 ```
 jeatlabs-page/
-├── src/
+├── src/                     # Source code (development)
 │   ├── components/          # Reusable UI components
 │   │   ├── Header.jsx       # Fixed navigation header
 │   │   ├── Hero.jsx         # Main hero section
@@ -38,17 +38,23 @@ jeatlabs-page/
 │   │   ├── About.css
 │   │   ├── Contact.css
 │   │   └── Footer.css
-│   ├── assets/              # Static assets (images, icons)
+│   ├── assets/              # Source assets (images, icons)
 │   ├── App.jsx              # Main app component with routing
 │   └── main.jsx             # Application entry point
 ├── public/                  # Public static assets
-├── dist/                    # Production build output
-├── index.html               # HTML template
+├── dist/                    # Build output (gitignored)
+├── assets/                  # COMPILED assets for GitHub Pages (committed)
+│   ├── index-*.js           # Compiled JavaScript bundle
+│   └── index-*.css          # Compiled CSS bundle
+├── index.html               # COMPILED HTML for GitHub Pages (committed)
 ├── vite.config.js           # Vite configuration
 ├── package.json             # Dependencies and scripts
 ├── claude.md                # Claude workflow rules
+├── DEPLOYMENT.md            # Deployment guide
 └── README.md                # This file
 ```
+
+**Important:** The root `index.html` and `assets/` folder are the COMPILED build output that GitHub Pages serves. The source code lives in `src/`.
 
 ## Features
 
@@ -112,26 +118,78 @@ jeatlabs-page/
 - `npm run lint` - Run ESLint
 - `npm run deploy` - Build and deploy to GitHub Pages
 
-## Deployment
+## Deployment to GitHub Pages
 
-The site is automatically deployed to GitHub Pages:
+The site is deployed to GitHub Pages and serves from the `main` branch root:
 
 **Live URL:** https://jeatlabs.github.io/jeatlabs-page/
 
-### Manual Deployment
+### How It Works
 
-```bash
-npm run deploy
+GitHub Pages serves the compiled files directly from the root of the `main` branch:
+- `index.html` (root) - Compiled HTML file
+- `assets/` (root) - Compiled JS and CSS bundles
+
+The source code in `src/` is NOT served, only the build output.
+
+### Deployment Process
+
+**IMPORTANT:** Follow these exact steps when making changes:
+
+1. **Make changes in `src/` files** (components, styles, etc.)
+
+2. **Test locally:**
+   ```bash
+   npm run dev
+   ```
+
+3. **Build for production:**
+   ```bash
+   npm run build
+   ```
+
+   This compiles React to the ROOT directory:
+   - Overwrites `index.html` in root with compiled version
+   - Regenerates `assets/` folder with new bundles
+
+4. **Verify build locally:**
+   ```bash
+   npm run preview
+   ```
+   Access at: http://localhost:4173/jeatlabs-page/
+
+5. **Commit and push:**
+   ```bash
+   git add .
+   git commit -m "Your changes"
+   git push
+   ```
+
+6. **Wait 30-60 seconds** for GitHub Pages to update
+
+7. **Verify deployment:** Visit https://jeatlabs.github.io/jeatlabs-page/
+
+### Key Configuration
+
+**vite.config.js:**
+```javascript
+export default defineConfig({
+  base: '/jeatlabs-page/',        // GitHub Pages subdirectory
+  build: {
+    outDir: '.',                   // Build to ROOT directory
+    emptyOutDir: false,            // Don't delete source files
+  },
+})
 ```
 
-This command:
-1. Builds the production bundle
-2. Deploys to the `gh-pages` branch
-3. GitHub Pages automatically serves the site
+**src/App.jsx:**
+```javascript
+<Router basename="/jeatlabs-page">  // Match Vite base path
+```
 
-### Automatic Deployment
+### .gitignore Configuration
 
-Every push to the `main` branch triggers automatic deployment via GitHub Actions (if configured).
+The `dist/` folder is gitignored, but root `index.html` and `assets/` are NOT ignored so they can be committed to the repo.
 
 ## Code Quality
 

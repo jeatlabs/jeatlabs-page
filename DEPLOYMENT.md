@@ -1,103 +1,278 @@
-# Deployment Guide
+# Deployment Guide - JeatLabs Page
 
 ## Current Status
 
-✅ **React Application:** Fully functional and tested locally
-⚠️ **GitHub Pages:** Requires configuration change
+✅ **React Application:** Fully functional and deployed
+✅ **GitHub Pages:** Serving from `main` branch root
+✅ **Live Site:** https://jeatlabs.github.io/jeatlabs-page/
 
-## What Has Been Done
+## How GitHub Pages Deployment Works
 
-1. ✅ Migrated static HTML to React + Vite
-2. ✅ Configured routing with React Router DOM
-3. ✅ Set up basename for GitHub Pages subdirectory
-4. ✅ Built production bundle successfully
-5. ✅ Deployed to `gh-pages` branch
-6. ✅ Tested locally - works perfectly
+GitHub Pages serves the compiled build output directly from the **root of the `main` branch**.
 
-## GitHub Pages Configuration Needed
+### What Gets Deployed
 
-The site is currently deployed to the `gh-pages` branch, but GitHub Pages needs to be configured to serve from that branch.
+**Root directory files (committed to git):**
+- `index.html` - Compiled HTML with React app
+- `assets/index-*.js` - Compiled JavaScript bundle (~231 KB)
+- `assets/index-*.css` - Compiled CSS bundle (~3 KB)
 
-### Steps to Configure (Manual - GitHub Settings):
+**Source files (NOT served by GitHub Pages):**
+- `src/` - React source code
+- `node_modules/` - Dependencies
+- `dist/` - Temporary build directory (gitignored)
 
-1. Go to: https://github.com/jeatlabs/jeatlabs-page/settings/pages
-2. Under "Source", select:
-   - **Branch:** `gh-pages`
-   - **Folder:** `/ (root)`
-3. Click "Save"
-4. Wait 2-3 minutes for deployment
-5. Site will be live at: https://jeatlabs.github.io/jeatlabs-page/
+## Critical Deployment Process
 
-## Local Development
+### Step-by-Step Guide
 
-### Start Development Server
+**1. Make Changes in Source Files**
+
+Edit files in the `src/` directory:
+```bash
+src/components/Header.jsx
+src/pages/Home.jsx
+src/styles/Hero.css
+# etc.
+```
+
+**2. Test Locally**
+
 ```bash
 npm run dev
 ```
-Access at: http://localhost:5173
+- Opens http://localhost:5173
+- Hot Module Replacement (HMR) for instant updates
 
-### Build for Production
+**3. Build for Production**
+
+**⚠️ CRITICAL STEP - DO NOT SKIP:**
+
 ```bash
 npm run build
 ```
-Output in `dist/` directory
 
-### Preview Production Build
+This command:
+- Compiles all React/JSX to vanilla JavaScript
+- Bundles and minifies all code
+- **Overwrites `index.html` in root directory**
+- **Regenerates `assets/` folder in root**
+- Outputs to ROOT (not `dist/`)
+
+**4. Preview Build Locally**
+
 ```bash
 npm run preview
 ```
-Access at: http://localhost:4173/jeatlabs-page/
+- Opens http://localhost:4173/jeatlabs-page/
+- Simulates exactly how GitHub Pages serves it
+- Test all routes work correctly
 
-### Deploy to GitHub Pages
+**5. Commit Build Output**
+
 ```bash
-npm run deploy
+git add .
+git commit -m "Update: [describe your changes]"
+git push origin main
 ```
-This builds and pushes to `gh-pages` branch automatically.
+
+**IMPORTANT:** Both source files AND compiled output must be committed:
+- Source: `src/**/*`
+- Compiled: `index.html`, `assets/*`
+
+**6. Wait for Deployment**
+
+- GitHub Pages automatically detects the push
+- Deployment takes 30-60 seconds
+- No manual steps required
+
+**7. Verify Deployment**
+
+Visit: https://jeatlabs.github.io/jeatlabs-page/
+
+Check:
+- All content displays correctly
+- No console errors
+- All routes work (`/servicios`, `/contacto`)
+- Styles are applied
+
+## Configuration Details
+
+### vite.config.js
+
+```javascript
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/jeatlabs-page/',      // GitHub Pages subdirectory
+  build: {
+    outDir: '.',                 // ⚠️ BUILD TO ROOT (not 'dist')
+    assetsDir: 'assets',
+    sourcemap: false,
+    emptyOutDir: false,          // Don't delete source files
+  },
+})
+```
+
+### src/App.jsx
+
+```javascript
+<Router basename="/jeatlabs-page">  {/* Must match vite.config.js base */}
+  <Routes>
+    <Route path="/" element={<Home />} />
+    <Route path="/servicios" element={<ServicesPage />} />
+    <Route path="/contacto" element={<ContactPage />} />
+  </Routes>
+</Router>
+```
+
+### .gitignore
+
+```
+node_modules
+dist              # Temp build directory (ignored)
+dist-ssr
+*.local
+
+# Root index.html and assets/ are NOT ignored
+# They must be committed for GitHub Pages
+```
+
+## Common Issues & Solutions
+
+### Issue: Blank page on GitHub Pages
+
+**Cause:** Forgot to run `npm run build` before pushing
+
+**Solution:**
+```bash
+npm run build
+git add index.html assets/
+git commit -m "Add build output"
+git push
+```
+
+### Issue: 404 on assets
+
+**Cause:** Wrong `base` path in vite.config.js
+
+**Solution:** Ensure `base: '/jeatlabs-page/'` matches your repo name
+
+### Issue: Routing doesn't work
+
+**Cause:** `basename` in Router doesn't match vite config
+
+**Solution:** Both must be `/jeatlabs-page/`:
+- vite.config.js: `base: '/jeatlabs-page/'`
+- App.jsx: `<Router basename="/jeatlabs-page">`
+
+### Issue: Changes not showing
+
+**Cause:** Browser cache
+
+**Solution:** Hard refresh (Cmd+Shift+R) or add query param `?v=timestamp`
 
 ## Project Structure
 
-The React app is organized as follows:
-
 ```
-src/
-├── components/       # Reusable UI components
-│   ├── Header.jsx
-│   ├── Hero.jsx
-│   ├── Services.jsx
-│   ├── About.jsx
-│   ├── Contact.jsx
-│   └── Footer.jsx
-├── pages/           # Page-level components
-│   ├── Home.jsx
-│   ├── ServicesPage.jsx
-│   └── ContactPage.jsx
-├── styles/          # Component styles
-│   ├── globals.css
-│   ├── Header.css
-│   ├── Hero.css
-│   ├── Services.css
-│   ├── About.css
-│   ├── Contact.css
-│   └── Footer.css
-└── App.jsx          # Main app with routing
+jeatlabs-page/
+├── src/                      # SOURCE CODE (edit these)
+│   ├── components/           # React components
+│   ├── pages/                # Page components
+│   ├── styles/               # CSS files
+│   ├── App.jsx               # Main app with routing
+│   └── main.jsx              # Entry point
+│
+├── index.html                # COMPILED (auto-generated)
+├── assets/                   # COMPILED (auto-generated)
+│   ├── index-*.js           # Bundled JavaScript
+│   └── index-*.css          # Bundled CSS
+│
+├── dist/                     # Temp build (gitignored)
+├── node_modules/             # Dependencies (gitignored)
+│
+├── vite.config.js            # Vite configuration
+├── package.json              # Scripts and dependencies
+├── claude.md                 # Workflow rules
+├── DEPLOYMENT.md             # This file
+└── README.md                 # Documentation
 ```
 
 ## Available Routes
 
-- `/` - Home page (all sections)
+- `/` - Home page with all sections
 - `/servicios` - Services detail page
 - `/contacto` - Contact page
 
-## Build Output
+All routes use client-side routing (SPA).
 
-Production build creates:
-- `dist/index.html` - Single HTML file
-- `dist/assets/` - Bundled JS and CSS files
-- Total size: ~237 KB (minified + gzipped: ~74 KB)
+## Build Output Details
 
-## Notes
+After `npm run build`:
 
-- The app uses client-side routing (SPA)
-- All routes work correctly with the basename configuration
-- Build is optimized for production (minified, tree-shaken)
-- No server-side configuration needed
+```
+index.html                   0.63 kB  (gzip: 0.36 kB)
+assets/index-*.css           3.01 kB  (gzip: 1.00 kB)
+assets/index-*.js          231.33 kB  (gzip: 74.00 kB)
+```
+
+Total: ~237 KB raw, ~75 KB gzipped
+
+## Quick Reference Commands
+
+```bash
+# Development
+npm run dev              # Start dev server (localhost:5173)
+
+# Production
+npm run build            # Build to root directory ⚠️ CRITICAL
+npm run preview          # Preview build (localhost:4173)
+
+# Deployment
+git add .
+git commit -m "message"
+git push                 # Auto-deploys to GitHub Pages
+
+# Code Quality
+npm run lint             # Run ESLint
+```
+
+## Deployment Checklist
+
+Before pushing to GitHub:
+
+- [ ] Changes made in `src/` files
+- [ ] Tested with `npm run dev`
+- [ ] **Ran `npm run build`** ⚠️ CRITICAL
+- [ ] Verified with `npm run preview`
+- [ ] All routes work correctly
+- [ ] No console errors
+- [ ] Committed both source AND build output
+- [ ] Pushed to GitHub
+- [ ] Waited 30-60 seconds
+- [ ] Verified on https://jeatlabs.github.io/jeatlabs-page/
+
+## Emergency Rollback
+
+If deployment breaks:
+
+```bash
+# Revert to previous commit
+git log --oneline          # Find previous good commit
+git revert HEAD            # Revert last commit
+git push
+
+# OR reset to specific commit
+git reset --hard <commit-hash>
+git push --force           # ⚠️ Use with caution
+```
+
+## Support
+
+For issues or questions, refer to:
+- [README.md](README.md) - Full documentation
+- [claude.md](claude.md) - Workflow rules
+- [Vite Docs](https://vitejs.dev/)
+- [React Router Docs](https://reactrouter.com/)
