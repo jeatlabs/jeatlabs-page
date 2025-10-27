@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Keep build output in root for GitHub Pages
+!index.html
+!assets/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

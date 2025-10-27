@@ -6,8 +6,9 @@ export default defineConfig({
   plugins: [react()],
   base: '/jeatlabs-page/',
   build: {
-    outDir: 'dist',
+    outDir: '.',  // Build to root directory
     assetsDir: 'assets',
     sourcemap: false,
+    emptyOutDir: false,  // Don't delete source files
   },
 })
