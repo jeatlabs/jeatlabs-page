@@ -12,7 +12,7 @@ import './styles/globals.css';
  */
 function App() {
   return (
-    <Router>
+    <Router basename="/jeatlabs-page">
       <div className="app">
         <Header />
         <main>
